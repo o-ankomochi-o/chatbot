@@ -1,2 +1,5 @@
 streamlit
 openai
+langchain
+qdrant-client
+tiktoken
