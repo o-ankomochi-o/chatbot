@@ -3,3 +3,5 @@ openai
 langchain
 qdrant-client
 tiktoken
+langchain-community 
+langchain-openai
