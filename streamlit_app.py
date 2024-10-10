@@ -12,7 +12,6 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams
 
 # Qdrantの設定
-QDRANT_PATH = "./local_qdrant"
 COLLECTION_NAME = "gci_2024_winter"
 
 # タイトルと説明を表示
@@ -25,8 +24,11 @@ st.write(
 # ユーザーからOpenAI APIキーを取得
 openai_api_key = st.text_input("OpenAI APIキー", type="password")
 
-def load_qdrant():
-    client = QdrantClient(path=QDRANT_PATH)
+@st.cache_resource
+def get_qdrant_client():
+    return QdrantClient(":memory:")  # インメモリモードで初期化
+
+def load_qdrant(client):
     collections = client.get_collections().collections
     collection_names = [collection.name for collection in collections]
     if COLLECTION_NAME not in collection_names:
@@ -41,18 +43,17 @@ def load_qdrant():
         embeddings=OpenAIEmbeddings(model="text-embedding-3-small", api_key=openai_api_key)
     )
 
-def build_vector_store(texts):
-
-    qdrant = load_qdrant()
+def build_vector_store(texts, client):
+    qdrant = load_qdrant(client)
     text_splitter = CharacterTextSplitter.from_tiktoken_encoder(
         model_name="text-embedding-3-small",
         chunk_size=250,
         chunk_overlap=0,
     )
-
     documents = text_splitter.create_documents(texts)
     qdrant.add_documents(documents)
     st.write('ベクトルストアにドキュメントを追加しました。')
+    return qdrant
 
 if not openai_api_key:
     st.info("APIキーを入力してください。", icon="🗝️")
